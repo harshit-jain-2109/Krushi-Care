@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block pagetitle %}
+AI Engine
+{% endblock pagetitle %}
+
+{% block body %}
+<div>
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-5 text-center text-white">
+            <div class="col-lg-10 mx-auto">
+                <h1 class="display-4" style="padding-top: 2%; font-weight: 400; color: rgb(4, 54, 4);"><b>🍀AI Engine🍀</b></h1>
+                <p class="lead" style="font-weight: 500; color: black;">Let AI Engine Help You Detect Plant Disease</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Info Column -->
+            <div class="col mx-auto">
+                <div class="p-5 bg-white shadow rounded-lg" style="height: 95%;">
+                    <h5><b>Why is it necessary to detect disease in plants?</b></h5>
+                    <p>
+                        Plant diseases affect growth and yield. Early detection improves transparency and reduces crop loss. 
+                        Without proper diagnosis, treatment is ineffective and wasteful. Accurate identification helps implement effective control measures.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Middle Upload Column -->
+            <div class="col mx-auto">
+                <div class="p-5 bg-white shadow rounded-lg" style="height: 95%;">
+                    <!-- <img src="https://www.pngjoy.com/pngl/250/4840262_plants-png-indoors-tropical-plant-png-hd-png.png" height="200" width="200" class="d-block mx-auto mb-4 rounded-pill" alt="Plant Image"> -->
+
+                    <form action="/submit" method="POST" enctype="multipart/form-data">
+                        <div class="custom-file overflow-hidden mb-4">
+                            <input type="file" id="actual-btn" hidden name="image" />
+                            <label for="actual-btn" class="btn btn-outline-secondary">Choose File</label>
+                            <button type="button" id="camera-btn" class="btn btn-outline-primary ml-2">Open Camera</button>
+                            <br/><span id="file-chosen">No file chosen</span>
+                        </div>
+
+                        <!-- Camera Feed -->
+                        <div id="camera-container" style="display: none;">
+                            <video id="camera-feed" width="320" height="240" autoplay></video>
+                            <button type="button" id="capture-btn" class="btn btn-sm btn-success mt-2">Capture Photo</button>
+                        </div>
+
+                        <!-- Preview -->
+                        <img id="preview" src="#" alt="Preview" style="display: none; max-width: 100%; margin-top: 10px;" />
+
+                        <h6 class="text-center mb-4 text-muted">
+                            Upload your plant leaf image and let AI do the diagnosis.
+                        </h6>
+
+                        <center>
+                            <button type="submit" class="btn btn-outline-success">Submit</button>
+                        </center>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Info Column -->
+            <div class="col mx-auto">
+                <div class="p-5 bg-white shadow rounded-lg" style="height: 95%;">
+                    <h5><b>Prevent Plant Disease: Follow These Steps</b></h5>
+                    <ol>
+                        <li>Follow Good Sanitation Practices.</li>
+                        <li>Fertilize to Keep Your Plants Healthy.</li>
+                        <li>Inspect Plants for Diseases Before Bringing Them Home.</li>
+                        <li>Allow Soil to Warm Before Planting.</li>
+                        <li>Rotate Crops in Vegetable Gardens.</li>
+                        <li>Ensure Good Air Circulation.</li>
+                        <li>Remove Diseased Stems and Foliage.</li>
+                    </ol>
+                    <a target="_blank" href="https://www.thespruce.com/prevent-plant-diseases-in-your-garden-2539511">
+                        <button type="button" class="btn btn-outline-success">More Info</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    const actualBtn = document.getElementById('actual-btn');
+    const fileChosen = document.getElementById('file-chosen');
+    const cameraBtn = document.getElementById('camera-btn');
+    const cameraFeed = document.getElementById('camera-feed');
+    const captureBtn = document.getElementById('capture-btn');
+    const preview = document.getElementById('preview');
+    const cameraContainer = document.getElementById('camera-container');
+
+    let capturedFile = null;
+
+    // Display chosen file name
+    actualBtn.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            fileChosen.textContent = file.name;
+            displayImagePreview(file);  // Display image preview
+        } else {
+            fileChosen.textContent = "No file chosen";
+            preview.style.display = 'none';  // Hide preview if no file is chosen
+        }
+    });
+
+    // Display image preview function
+    function displayImagePreview(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            preview.src = event.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    cameraBtn.addEventListener('click', () => {
+        cameraContainer.style.display = 'block';
+        startCamera();
+    });
+
+    captureBtn.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = cameraFeed.videoWidth;
+        canvas.height = cameraFeed.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        capturedFile = dataURItoFile(dataUrl, 'captured.jpg');
+
+        // Assign captured file to the file input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(capturedFile);
+        actualBtn.files = dataTransfer.files;
+
+        fileChosen.textContent = capturedFile.name;
+        cameraContainer.style.display = 'none';
+    });
+
+    function startCamera() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => cameraFeed.srcObject = stream)
+            .catch(err => console.error('Camera access denied:', err));
+    }
+
+    function dataURItoFile(dataURI, filename) {
+        const byteString = atob(dataURI.split(',')[1]);
+        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new File([ab], filename, { type: mimeString });
+    }
+</script>
+{% endblock body %}
